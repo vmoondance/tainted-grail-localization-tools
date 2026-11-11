@@ -1,0 +1,22 @@
+# Binary blobs and dumps
+*.blob
+*.bundle
+*.arch
+
+# Tool output and work folders
+extracted/
+test_extracted/
+build/
+test_build/
+*.json
+!example_strings.json
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
