@@ -16,18 +16,41 @@ if not exist "languages.arch" (
     exit /b 1
 )
 
-set INPUT_JSON=
-if exist "strings_translated.json" (
-    set INPUT_JSON=strings_translated.json
-) else if exist "strings_en.json" (
-    set INPUT_JSON=strings_en.json
-) else (
-    echo [!] Enter the path to your translated JSON file:
-    set /p INPUT_JSON="JSON file path: "
+set INPUT_FILE=
+set IS_CSV=0
+
+:: Check for common translation files
+for %%F in (translation_*.csv) do (
+    set INPUT_FILE=%%F
+    set IS_CSV=1
+)
+for %%F in (strings_*_translated.json strings_translated.json) do (
+    if exist "%%F" (
+        set INPUT_FILE=%%F
+        set IS_CSV=0
+    )
+)
+if "!INPUT_FILE!"=="" (
+    for %%F in (strings_*.json) do (
+        set INPUT_FILE=%%F
+        set IS_CSV=0
+    )
 )
 
-if not exist "!INPUT_JSON!" (
-    echo [ERROR] JSON file '!INPUT_JSON!' not found!
+echo Found translation file: !INPUT_FILE!
+echo (Press Enter to use this file, or type custom filename)
+set /p USER_FILE="File path: "
+if not "!USER_FILE!"=="" (
+    set INPUT_FILE=!USER_FILE!
+    if "!INPUT_FILE:~-4!"==".csv" (
+        set IS_CSV=1
+    ) else (
+        set IS_CSV=0
+    )
+)
+
+if not exist "!INPUT_FILE!" (
+    echo [ERROR] Translation file '!INPUT_FILE!' not found!
     pause
     exit /b 1
 )
@@ -40,8 +63,12 @@ set /p USER_SLOT="Enter target language slot (press Enter for 'pl'): "
 if not "!USER_SLOT!"=="" set TARGET_SLOT=!USER_SLOT!
 
 echo.
-echo [*] Step 1/2: Compiling '!INPUT_JSON!' to binary blobs...
-python import_json.py --json "!INPUT_JSON!" --out-dir "build"
+echo [*] Step 1/2: Compiling '!INPUT_FILE!' to binary blobs...
+if "!IS_CSV!"=="1" (
+    python import_csv.py --csv "!INPUT_FILE!" --out-dir "build"
+) else (
+    python import_json.py --json "!INPUT_FILE!" --out-dir "build"
+)
 if errorlevel 1 (
     echo [ERROR] Blob compilation failed!
     pause
